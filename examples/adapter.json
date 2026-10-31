@@ -1,0 +1,1 @@
+{"name":"fictional-local-adapter","verified":true,"fields":{"voice":{"type":"string"},"speed":{"type":"number","min":0.5,"max":2.0},"response_format":{"type":"string","enum":["wav","mp3"]}},"prompt":{"mode":"none"}}
