@@ -27,6 +27,8 @@ python scripts/audit_audio.py --manifest examples/audit.json --output workdir/au
 python -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
+测试可用 `python -m unittest discover -s scripts -p 'test_*.py' -v`，也可在已安装 pytest 时用 `python3 -m pytest -q scripts`（均为 126 项）。
+
 输出文件已存在时工具拒绝覆盖。结构预检用 `--dry-run`，它不验证媒体。回归测试覆盖输入验证、分级证据、读音疑点及输入验证、凭据误判、批次部分失败、媒体工具失败和防覆盖；不等于供应商兼容性或听感认证。
 
 ## English
