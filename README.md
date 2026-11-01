@@ -1,4 +1,4 @@
-# Narration Quality Workflow
+# Eddyy Skill Narration Quality
 
 **v0.2.0（第6版，实验版）**
 
@@ -18,7 +18,9 @@
 
 ## 安装和使用
 
-将本目录复制到 Codex 的 `skills/narration-quality-workflow`，阅读 [SKILL.md](SKILL.md) 和 [审核说明](references/audit-contract.md)。需要 Python 3；媒体检查需本机 FFmpeg 和 ffprobe。以下从目录根运行，生成的 WAV 仅为合成样例：
+技能标识为 `eddyy-skill-narration-quality`，沿用 `eddyy-skill-功能名` 命名方式。原名 `narration-quality-workflow` 仅作为历史名称；仓库地址和既有 `v0.2.0` 标签不变。此次只统一技能名称，不改变脚本接口、清单格式或审核行为。已有安装请在迁移前备份本地改动，并确保技能发现目录中只保留一个有效副本，避免新旧名称重复加载。
+
+将本目录复制到 Codex 的 `skills/eddyy-skill-narration-quality`，阅读 [SKILL.md](SKILL.md) 和 [审核说明](references/audit-contract.md)。需要 Python 3；媒体检查需本机 FFmpeg 和 ffprobe。以下从目录根运行，生成的 WAV 仅为合成样例：
 
 ```sh
 python examples/generate_fixture.py

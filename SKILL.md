@@ -1,9 +1,9 @@
 ---
-name: narration-quality-workflow
+name: eddyy-skill-narration-quality
 description: 有旁白音频或视频生成、修改或交付验收时使用；覆盖 TTS、ASR辅助复核、字幕对时与局部修复，不用于普通音乐混音或纯转写。
 ---
 
-# 旁白质量工作流
+# Eddyy Skill Narration Quality（旁白质量工作流）
 
 **v0.2.0（第6版，实验版）**
 
