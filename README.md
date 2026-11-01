@@ -2,6 +2,8 @@
 
 **v0.2.0（第6版，实验版）**
 
+`main` 在标签 `v0.2.0` 之后含未发布的命名对齐与安装脚本，见 [CHANGELOG](CHANGELOG.md)。
+
 平台无关的旁白生成、逐句审核和局部修复工作流。适用于 TTS、诗词朗读及字幕对时：锁定原稿和句 ID，按供应商已验证能力生成请求计划，检查音频，再局部替换并重新审核全轨。支持已有音频作为审核输入。
 
 核心流程与平台适配层分离；适配器声明能力不代表已经实测各供应商 API。规划工具不联网、不授予生成或付费权限。自动检查不能证明实际听感或替代真实听审；未做完整听审不等于本地检查失败。不要把凭据写入清单。
@@ -20,7 +22,17 @@
 
 技能标识为 `eddyy-skill-narration-quality`，沿用 `eddyy-skill-功能名` 命名方式。原名 `narration-quality-workflow` 仅作为历史名称；仓库地址和既有 `v0.2.0` 标签不变。此次只统一技能名称，不改变脚本接口、清单格式或审核行为。已有安装请在迁移前备份本地改动，并确保技能发现目录中只保留一个有效副本，避免新旧名称重复加载。
 
-将本目录复制到 Codex 的 `skills/eddyy-skill-narration-quality`，阅读 [SKILL.md](SKILL.md) 和 [审核说明](references/audit-contract.md)。需要 Python 3；媒体检查需本机 FFmpeg 和 ffprobe。以下从目录根运行，生成的 WAV 仅为合成样例：
+在仓库根目录运行安装脚本，把技能复制到 `<skills 目录>/eddyy-skill-narration-quality`（目标目录名必须与技能标识一致）：
+
+```sh
+./install.sh --dry-run                 # 仅预览，不改动
+./install.sh                           # 默认 $SKILLS_DIR，否则 ${CODEX_HOME:-$HOME/.codex}/skills
+./install.sh --target /path/to/skills  # 指定 skills 目录
+```
+
+已有同名安装不会被删除，而是被移到 `<skills 目录>/.backups/eddyy-skill-narration-quality.bak-<时间戳>-<pid>`；检测到旧名 `narration-quality-workflow` 只会警告，不会改动。手动安装等价于将 `SKILL.md`、`references/`、`scripts/`、`examples/` 复制到该目录。
+
+阅读 [SKILL.md](SKILL.md) 和 [审核说明](references/audit-contract.md)。需要 Python 3；媒体检查需本机 FFmpeg 和 ffprobe。以下从目录根运行，生成的 WAV 仅为合成样例：
 
 ```sh
 python examples/generate_fixture.py
