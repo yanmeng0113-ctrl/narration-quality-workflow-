@@ -1,1 +1,2 @@
-{"items":[{"id":"line-01","audio":"fixture.wav","heard_review":"not_performed"}],"thresholds":{"true_peak_limit_dbtp":-1,"tail_rms_threshold_dbfs":-35}}
+{"items":[{"id":"line-01","audio":"../workdir/fixture.wav","heard_review":"not_performed"}],"thresholds":{"true_peak_limit_dbtp":-1,"tail_rms_threshold_dbfs":-35}}
+

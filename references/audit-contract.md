@@ -17,12 +17,13 @@ ASR 为独立步骤：不使用正确稿提示，交叉识别、分段复核并�
 
 ```bash
 python examples/generate_fixture.py
-python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output plan.json
-python scripts/audit_audio.py --manifest examples/audit.json --output audit.json
+python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
+python scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
 ```
 
-fixture 生成器拒绝覆盖已有文件；生产时在独立工作目录设置实际路径。
+fixture 默认仅写被 .gitignore 排除的 workdir/；可用 --output 指定独立工作区，拒绝覆盖已有文件。0.6 秒只是可配置停顿示例，不是统一门槛。
 
 ## 分级复核与记录
 
 先按实际能力和授权范围对最终版本执行全量本地检查，记录版本哈希、覆盖及缺项；只对本地发现且无法可靠判定的疑点，在已授权预算与外传范围内发送必要短片段给适用云端适配器。识别差异不能单独判错，越界时码和无法证实的结果不能作为通过证据。确认问题后局部修复并复验最终版；分别记录本地通过、疑点已复核和阻塞。未真实完整听审不得声称听审通过，但本地无实质未决疑点时，不把未做完整听审本身作为交付阻塞。
+

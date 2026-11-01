@@ -7,15 +7,18 @@ import json
 import math
 import pathlib
 import re
+import shutil
 import subprocess
 import sys
+from plan_adapter import SECRET_VALUE, reject_credentials, finite_number
 
 def number(value,name):
-    if isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value):raise ValueError(name+' must be a finite number')
+    if not finite_number(value):raise ValueError(name+' must be a finite number')
     return float(value)
 
 def load_manifest(path):
     cfg=json.loads(path.read_text(encoding='utf-8-sig'))
+    reject_credentials(cfg)
     if not isinstance(cfg,dict):raise ValueError('manifest must be an object')
     items=cfg.get('items')
     if not isinstance(items,list) or not items:raise ValueError('items must be a nonempty array')
@@ -39,13 +42,28 @@ def load_manifest(path):
 
 def run(cmd):
     p=subprocess.run(cmd,capture_output=True,text=True,encoding='utf-8',errors='replace')
-    if p.returncode:raise RuntimeError(pathlib.Path(cmd[0]).name+' failed: '+p.stderr.strip()[-1000:])
+    if p.returncode:raise RuntimeError(pathlib.Path(cmd[0]).name+' failed (exit '+str(p.returncode)+'); raw stderr withheld')
     return p.stdout,p.stderr
 
-def audit(ident,audio,heard,expected,asr,tp,tail,ffmpeg,ffprobe):
+def preflight(ffmpeg,ffprobe):
+    for label,tool in (('ffmpeg',ffmpeg),('ffprobe',ffprobe)):
+        if shutil.which(tool) is None:raise RuntimeError(label+' unavailable; install or set executable path')
+        try:run([tool,'-version'])
+        except OSError:raise RuntimeError(label+' cannot execute') from None
+
+def audit(ident,audio,heard,expected,asr,tp,tail,ffmpeg,ffprobe,state=None):
+    if state is None:state={'decode_ok':None}
+    state['check_stage']='probe'
+
     raw,_=run([ffprobe,'-v','error','-show_format','-show_streams','-of','json',str(audio)])
     info=json.loads(raw);duration=float(info['format']['duration'])
-    run([ffmpeg,'-v','error','-xerror','-i',str(audio),'-f','null','-'])
+    if not math.isfinite(duration) or duration<=0:raise ValueError('invalid media duration')
+    state['check_stage']='decode'
+    try:run([ffmpeg,'-v','error','-xerror','-i',str(audio),'-f','null','-'])
+    except RuntimeError:
+        state['decode_ok']=False
+        raise
+    state.update(decode_ok=True,check_stage='analysis')
     _,log=run([ffmpeg,'-hide_banner','-nostats','-i',str(audio),'-af','silencedetect=noise=-40dB:d=0.12,ebur128=peak=true','-f','null','-'])
     peaks=re.findall(r'Peak:\s*(-inf|[-+0-9.]+) dBFS',log);lufs=re.findall(r'I:\s*(-inf|[-+0-9.]+) LUFS',log)
     if not peaks:raise RuntimeError('true peak unavailable')
@@ -62,18 +80,23 @@ def main():
     manifest=pathlib.Path(a.manifest).resolve();out=pathlib.Path(a.output).resolve();items,tp,tail=load_manifest(manifest)
     if out==manifest or out.exists() or any(out==item[1] for item in items):raise ValueError('output must be a new file distinct from inputs')
     if a.dry_run:print(json.dumps({'dry_run':True,'mode':'structure_only','items':[{'id':x[0],'media_exists':x[1].is_file(),'media_tested':False} for x in items],'writes':False}));return
-    results=[]
+    results=[];preflight_error=None
+    try:preflight(a.ffmpeg,a.ffprobe)
+    except (OSError,RuntimeError) as exc:preflight_error=str(exc)
     for i,f,h,e,s in items:
+        state={'decode_ok':None,'check_stage':'preflight' if preflight_error else 'input'}
         try:
+            if preflight_error:raise RuntimeError(preflight_error)
             if not f.is_file():raise FileNotFoundError('audio file does not exist')
-            item=audit(i,f,h,e,s,tp,tail,a.ffmpeg,a.ffprobe);item['status']='success';results.append(item)
+            item=audit(i,f,h,e,s,tp,tail,a.ffmpeg,a.ffprobe,state);item['status']='success';results.append(item)
         except (OSError,ValueError,KeyError,TypeError,RuntimeError,subprocess.CalledProcessError,json.JSONDecodeError) as exc:
-            results.append({'id':i,'input':str(f),'status':'error','error_type':type(exc).__name__,'error':str(exc),'heard_review':h})
+            results.append({'id':i,'input':str(f),'status':'error','error_type':type(exc).__name__,'error':str(exc) if isinstance(exc,(RuntimeError,FileNotFoundError)) and not SECRET_VALUE.search(str(exc)) else 'media check failed; raw diagnostic withheld','heard_review':h,**state})
     errors=sum(x['status']=='error' for x in results)
-    result={'items':results,'status':'partial' if errors and errors<len(results) else ('failed' if errors else 'complete'),'overall_pass':False,'overall_note':'Technical checks are not overall or listening acceptance.'}
+    result={'preflight':{'status':'failed' if preflight_error else 'passed','error':preflight_error},'items':results,'status':'partial' if errors and errors<len(results) else ('failed' if errors else 'complete'),'overall_pass':False,'overall_note':'Technical checks are not overall or listening acceptance.'}
     with out.open('x',encoding='utf-8') as f:json.dump(result,f,ensure_ascii=False,indent=2)
     print(json.dumps({'output':str(out),'items':len(results),'status':result['status'],'overall_pass':False}))
     if errors:sys.exit(2)
 if __name__=='__main__':
     try:main()
     except (OSError,ValueError,KeyError,TypeError,RuntimeError,subprocess.CalledProcessError,json.JSONDecodeError) as e:print(str(e),file=sys.stderr);sys.exit(1)
+

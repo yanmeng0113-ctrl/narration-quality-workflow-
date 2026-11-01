@@ -1,0 +1,10 @@
+{
+  "name": "unconfigured-audio-reviewer",
+  "provider": null,
+  "capability": "audio_understanding",
+  "verified": false,
+  "sample_verified": false,
+  "official_docs_url": null,
+  "network_enabled": false,
+  "note": "Contract only. No provider client installed or verified. Transcription is not audio understanding."
+}

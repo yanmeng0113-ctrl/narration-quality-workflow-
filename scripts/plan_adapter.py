@@ -9,7 +9,41 @@ import re
 import sys
 
 SENSITIVE = re.compile(r'(?i)(api[_-]?key|authorization|token|secret|password|credential)')
-SECRET_VALUE = re.compile(r'(?i)(?<![a-z0-9])(?:bearer\s+[a-z0-9._~-]{16,}|sk-[a-z0-9_-]{20,}|xox[baprs]-[a-z0-9-]{8,}|(?:api[_-]?key|token|secret|password)\s*=\s*[\"\']?[a-z0-9_./+~-]{12,})')
+SECRET_VALUE = re.compile(r'(?i)(?<![a-z0-9])(?:bearer\s+[a-z0-9._~-]{16,}|sk-[a-z0-9_-]{20,}|xox[baprs]-[a-z0-9-]{8,}|(?:api[_-]?key|token|secret|password|authorization|credential)\s*[:=]\s*[\"\']?[a-z0-9_./+~-]{12,})')
+
+CREDENTIAL_KEYS = {
+    'apikey', 'accesskey', 'accesskeyid', 'secretkey', 'secretaccesskey',
+    'accesstoken', 'refreshtoken', 'idtoken', 'authtoken', 'bearertoken', 'sessiontoken',
+    'clientsecret', 'privatekey', 'sshprivatekey', 'signingkey',
+    'awsaccesskeyid', 'awssecretaccesskey', 'awssessiontoken', 'proxyauthorization',
+}
+
+
+def finite_number(value):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:
+        return False
+
+
+def reject_credentials(value):
+    """Screen input keys and values before diagnostics or output can echo them."""
+    if isinstance(value, str) and SECRET_VALUE.search(value):
+        raise ValueError('possible credential rejected')
+    if isinstance(value, dict):
+        for key, item in value.items():
+            if not isinstance(key, str):
+                raise ValueError('object keys must be text')
+            if SENSITIVE.fullmatch(key) or re.sub(r'[._\s-]', '', key).lower() in CREDENTIAL_KEYS:
+                raise ValueError('sensitive field rejected')
+            reject_credentials(key)
+            reject_credentials(item)
+    elif isinstance(value, list):
+        for item in value:
+            reject_credentials(item)
+
 
 def text_value(value, label):
     if not isinstance(value, str) or not value.strip():
@@ -25,7 +59,7 @@ def validate_value(value, spec, label):
     if kind == 'string':
         text_value(value, label)
     elif kind == 'number':
-        if isinstance(value, bool) or not isinstance(value, (float, int)) or not math.isfinite(value):
+        if not finite_number(value):
             raise ValueError(f'{label} must be a finite number')
         if 'min' in spec and value < spec['min'] or 'max' in spec and value > spec['max']:
             raise ValueError(f'{label} outside adapter range')
@@ -35,6 +69,8 @@ def validate_value(value, spec, label):
         raise ValueError(f'{label} outside adapter enum')
 
 def plan(manifest, adapter):
+    reject_credentials(manifest)
+    reject_credentials(adapter)
     if not isinstance(manifest,dict) or not isinstance(adapter,dict):
         raise ValueError('manifest and adapter must be objects')
     if adapter.get('verified') is not True:
@@ -51,13 +87,13 @@ def plan(manifest, adapter):
         if set(spec)-{'type','min','max','enum'}:raise ValueError(f'{name}: unknown constraint')
         if spec['type']=='string' and ('min' in spec or 'max' in spec):raise ValueError(f'{name}: range requires numeric field')
         for bound in ('min','max'):
-            if bound in spec and (isinstance(spec[bound],bool) or not isinstance(spec[bound],(float,int)) or not math.isfinite(spec[bound])):raise ValueError(f'{name}: invalid {bound}')
+            if bound in spec and (not finite_number(spec[bound])):raise ValueError(f'{name}: invalid {bound}')
         if 'min' in spec and 'max' in spec and spec['min']>spec['max']:raise ValueError(f'{name}: min exceeds max')
         if 'enum' in spec:
             if not isinstance(spec['enum'],list) or not spec['enum']:raise ValueError(f'{name}: enum must be a nonempty array')
             for value in spec['enum']:
                 if spec['type']=='string' and (not isinstance(value,str) or not value.strip()):raise ValueError(f'{name}: invalid string enum')
-                if spec['type']=='number' and (isinstance(value,bool) or not isinstance(value,(int,float)) or not math.isfinite(value)):raise ValueError(f'{name}: invalid numeric enum')
+                if spec['type']=='number' and (not finite_number(value)):raise ValueError(f'{name}: invalid numeric enum')
     prompt = adapter.get('prompt', {'mode':'none'})
     if not isinstance(prompt,dict) or prompt.get('mode') not in ('none','field','embedded'):
         raise ValueError('invalid prompt mode')
@@ -89,6 +125,11 @@ def plan(manifest, adapter):
         if 'text_sha256' in seg and seg['text_sha256'] != digest:raise ValueError(f'{ident}: text hash mismatch')
         intent=seg.get('intent')
         if intent is not None:text_value(intent,'intent')
+        notes=seg.get('pronunciation_notes',[])
+        if not isinstance(notes,list):raise ValueError('pronunciation_notes must be a text array')
+        for note in notes:text_value(note,'pronunciation note')
+        content_type=seg.get('content_type','prose')
+        if content_type not in ('prose','poetry'):raise ValueError('invalid content_type')
         request=seg.get('request',{})
         if not isinstance(request,dict):raise ValueError('request must be an object')
         if intent is not None and ('prompt' in request or prompt.get('field') in request):
@@ -100,7 +141,7 @@ def plan(manifest, adapter):
             if key == 'prompt' and (prompt['mode'] != 'field' or prompt.get('field') != key):raise ValueError('prompt requires verified field mode')
             if key not in fields:
                 if isinstance(value,(dict,list)) or not isinstance(value,(str,int,float,bool,type(None))):raise ValueError('unsupported field value must be scalar')
-                if isinstance(value,float) and not math.isfinite(value):raise ValueError('unsupported field must be finite')
+                if isinstance(value,(int,float)) and not isinstance(value,bool) and not finite_number(value):raise ValueError('unsupported field must be finite')
                 if isinstance(value,str) and SECRET_VALUE.search(value):raise ValueError('possible credential rejected')
                 dropped.append({'field':key,'value':value,'reason':'unsupported'});continue
             if key==prompt.get('field') and prompt['mode']!='field':raise ValueError('prompt requires verified field mode')
@@ -114,7 +155,7 @@ def plan(manifest, adapter):
             else:
                 check_prompt(intent)
                 clean['text']=intent+prompt['separator']+text
-        result.append({'id':ident,'text':text,'text_sha256':digest,'intent_record':intent,'request':clean,'dropped':dropped})
+        result.append({'id':ident,'text':text,'text_sha256':digest,'intent_record':intent,'pronunciation_notes':notes,'content_type':content_type,'pronunciation_scan_required':bool(notes) or content_type=='poetry','pronunciation_review_required':bool(notes),'request':clean,'dropped':dropped})
     return {'adapter':adapter_name,'plan_only':True,'network_calls':0,'execution_authorized':False,'segments':result}
 
 def main():
@@ -128,3 +169,4 @@ def main():
 if __name__=='__main__':
     try:main()
     except (ValueError,KeyError,OSError,json.JSONDecodeError,TypeError) as e:print(str(e),file=sys.stderr);sys.exit(1)
+

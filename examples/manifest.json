@@ -1,1 +1,18 @@
-{"segments":[{"id":"line-01","text":"春风又绿江南岸。","intent":"平静、留白","request":{"voice":"example-voice","speed":1.0,"response_format":"wav"}}]}
+{
+  "segments": [
+    {
+      "id": "line-01",
+      "text": "春风又绿江南岸。",
+      "intent": "平静、留白",
+      "request": {
+        "voice": "example-voice",
+        "speed": 1.0,
+        "response_format": "wav"
+      },
+      "content_type": "poetry",
+      "pronunciation_notes": [
+        "诗句读音与停连需音频复核（ASR 同字不能证明）"
+      ]
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Narration Quality Workflow
 
-**v0.1.0 · 实验版**
+**v0.2.0（第6版，实验版）**
 
 平台无关的旁白生成、逐句审核和局部修复工作流。适用于 TTS、诗词朗读及字幕对时：锁定原稿和句 ID，按供应商已验证能力生成请求计划，检查音频，再局部替换并重新审核全轨。支持已有音频作为审核输入。
 
@@ -14,7 +14,7 @@
 
 ## 已知限制
 
-当前规划脚本的凭据启发式存在冒号形式赋值漏检风险；不要在输入、提示或配置中放入任何凭据，不能依赖该检查器保障秘密安全。本次仅更新工作流文档，未修复脚本。
+冒号和等号形式的常见凭据赋值已拒绝，普通英文可使用；启发式不是秘密扫描器，不要将凭据放入清单。新增分级判定：实际探测与解码最终媒体，其余检查需结构化版本绑定证据；未配置或实测任何云端音频理解提供商。见 [分级复核合同](references/staged-review.md)。
 
 ## 安装和使用
 
@@ -22,12 +22,12 @@
 
 ```sh
 python examples/generate_fixture.py
-python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output plan.json
-python scripts/audit_audio.py --manifest examples/audit.json --output audit.json
+python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
+python scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
 python -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
-输出文件已存在时工具拒绝覆盖。结构预检用 `--dry-run`，它不验证媒体。测试覆盖 41 项，包括输入验证、凭据误判、批次部分失败、媒体工具失败和防覆盖；不等于供应商兼容性或听感认证。
+输出文件已存在时工具拒绝覆盖。结构预检用 `--dry-run`，它不验证媒体。回归测试覆盖输入验证、分级证据、读音疑点及输入验证、凭据误判、批次部分失败、媒体工具失败和防覆盖；不等于供应商兼容性或听感认证。
 
 ## English
 
@@ -36,3 +36,4 @@ An experimental, platform-neutral workflow for narration planning, audio review,
 ## License
 
 MIT; see [LICENSE](LICENSE). FFmpeg is a separate dependency under its own license.
+
