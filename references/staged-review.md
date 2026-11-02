@@ -44,7 +44,7 @@
 
 `scripts/reviewer_transport.py` 已实现可执行传输代码，而非只有 request-builder；**尚未向真实供应商发送过本修复版本请求**。启用前必须确认实际授权，不可把 JSON 布尔值当作用户授权。
 
-入口：`python scripts/reviewer_transport.py --config workdir/reviewer.json --context workdir/clip-context.json --clip workdir/clip.wav --source workdir/final.mp4 --output workdir/cloud-candidate.json --execute`。输出须不存在；不提供 --execute 或 execution_enabled 非 true 时拒绝，不上传。仅固定官方 HTTPS `https://api.siliconflow.cn/v1/chat/completions`，拒绝重定向，无自动重试。
+入口：`python3 scripts/reviewer_transport.py --config workdir/reviewer.json --context workdir/clip-context.json --clip workdir/clip.wav --source workdir/final.mp4 --output workdir/cloud-candidate.json --execute`。输出须不存在；不提供 --execute 或 execution_enabled 非 true 时拒绝，不上传。仅固定官方 HTTPS `https://api.siliconflow.cn/v1/chat/completions`，拒绝重定向，无自动重试。
 
 配置需要：provider=siliconflow、明确 model、capability=audio_understanding、request_planning_enabled/execution_enabled、model_verified/audio_input_verified/pricing_verified/upload_authorized/payment_authorized 均为真正核实后的 true；official_docs_url、verification_date、pricing_checked_at、approval_reference；max_clip_seconds≤60、output_limit≤4096；pricing.currency、input_per_million、output_per_million、audio_units_per_second 及 remaining_budget。模型不预填，价格不预填；未知费用 fail closed。零价费率须另有 free_tariff_verified:true；audio_units_per_second 必须大于零。该预算计算为保守估算，不是供应商账单证明或服务端硬预算上限。
 

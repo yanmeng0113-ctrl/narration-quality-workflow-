@@ -1,5 +1,12 @@
 # Changelog
 
+## 未发布（main）
+
+不打新标签；不改变脚本接口、清单格式、审核行为或测试。
+
+- 技能名称统一为 `eddyy-skill-narration-quality`（提交 `1ae928f`）：SKILL.md 的 `name` 与标题、README 标题及文档中的安装目录随之更新；原名 `narration-quality-workflow` 仅作历史名称，仓库地址与 `v0.2.0` 标签不变。迁移时请确保技能发现目录只保留一个有效副本。
+- 文档命令统一为 `python3`（README 与 references），适配只有 `python3` 的机器。
+
 ## v0.2.0（第6版，实验版）
 
 固定的实验性版本，基于提交 `e534d07`；本次仅补充版本与文档标记，不改变行为、测试或评分逻辑。

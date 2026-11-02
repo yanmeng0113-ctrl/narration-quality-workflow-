@@ -16,9 +16,9 @@ ASR 为独立步骤：不使用正确稿提示，交叉识别、分段复核并�
 在 Skill 目录内，需 Python 和 PATH 中的 FFmpeg/ffprobe。生成的是本地合成正弦音，不含用户录音；输出文件必须不存在：
 
 ```bash
-python examples/generate_fixture.py
-python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
-python scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
+python3 examples/generate_fixture.py
+python3 scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
+python3 scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
 ```
 
 fixture 默认仅写被 .gitignore 排除的 workdir/；可用 --output 指定独立工作区，拒绝覆盖已有文件。0.6 秒只是可配置停顿示例，不是统一门槛。

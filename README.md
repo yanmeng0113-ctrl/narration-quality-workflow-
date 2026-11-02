@@ -23,13 +23,13 @@
 将本目录复制到 Codex 的 `skills/eddyy-skill-narration-quality`，阅读 [SKILL.md](SKILL.md) 和 [审核说明](references/audit-contract.md)。需要 Python 3；媒体检查需本机 FFmpeg 和 ffprobe。以下从目录根运行，生成的 WAV 仅为合成样例：
 
 ```sh
-python examples/generate_fixture.py
-python scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
-python scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
-python -m unittest discover -s scripts -p 'test_*.py' -v
+python3 examples/generate_fixture.py
+python3 scripts/plan_adapter.py --manifest examples/manifest.json --adapter examples/adapter.json --output workdir/plan.json
+python3 scripts/audit_audio.py --manifest examples/audit.json --output workdir/audit.json
+python3 -m unittest discover -s scripts -p 'test_*.py' -v
 ```
 
-测试可用 `python -m unittest discover -s scripts -p 'test_*.py' -v`，也可在已安装 pytest 时用 `python3 -m pytest -q scripts`（均为 126 项）。
+测试可用 `python3 -m unittest discover -s scripts -p 'test_*.py' -v`，也可在已安装 pytest 时用 `python3 -m pytest -q scripts`（均为 126 项）。
 
 输出文件已存在时工具拒绝覆盖。结构预检用 `--dry-run`，它不验证媒体。回归测试覆盖输入验证、分级证据、读音疑点及输入验证、凭据误判、批次部分失败、媒体工具失败和防覆盖；不等于供应商兼容性或听感认证。
 
